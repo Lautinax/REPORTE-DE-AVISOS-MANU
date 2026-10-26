@@ -16,12 +16,10 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         
-        /* Estilos generales de la interfaz */
         .brand-blue { color: #0b2447; }
         .bg-brand-blue { background-color: #0b2447; }
         .border-brand-blue { border-color: #0b2447; }
 
-        /* Estilos específicos para el Modo Presentación */
         #presentationModal {
             transition: opacity 0.25s ease-in-out;
         }
@@ -41,7 +39,6 @@
             position: relative;
         }
 
-        /* Tabla estilizada para diapositivas */
         .slide-table {
             width: 100%;
             border-collapse: separate;
@@ -75,41 +72,36 @@
             background-color: #e0f2fe;
         }
 
-        .slide-table tbody tr.total-row td {
-            background-color: #e0f2fe;
-            color: #0b2447;
-            font-weight: 800;
-            border-top: 2px solid #0b2447;
-            border-bottom: none;
-        }
-
-        /* Decoración de portada estilo corporativo MAINCAL */
         .slide-cover-accent {
             position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
+            top: 0; left: 0; bottom: 0;
             width: 16px;
             background-color: #0b2447;
         }
         .slide-cover-accent-sub {
             position: absolute;
-            top: 0;
-            left: 16px;
-            bottom: 0;
+            top: 0; left: 16px; bottom: 0;
             width: 8px;
             background-color: #0284c7;
         }
         
         .slide-geo-pattern {
             position: absolute;
-            right: -100px;
-            bottom: -100px;
-            width: 500px;
-            height: 500px;
+            right: -100px; bottom: -100px;
+            width: 500px; height: 500px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(224,242,254,0.8) 0%, rgba(2,132,199,0.15) 60%, rgba(255,255,255,0) 70%);
             pointer-events: none;
+        }
+
+        /* Estilos específicos para las tarjetas de Motivo */
+        .motivo-card {
+            border-left-width: 5px;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+        .motivo-card:hover {
+            background-color: #f1f5f9;
         }
     </style>
 </head>
@@ -156,13 +148,14 @@
             <div id="loadingMsg" class="hidden mt-4 text-sm font-medium text-sky-600 animate-pulse">Procesando información...</div>
         </div>
 
-        <!-- Contenedor del Reporte Web Tradicional (Oculto hasta cargar datos) -->
+        <!-- Contenedor del Reporte Web Tradicional -->
         <div id="reportContainer" class="hidden space-y-8">
             
-            <!-- Navegación interna del Reporte -->
+            <!-- Navegación interna -->
             <nav class="bg-white rounded-xl shadow-sm border border-slate-200 px-6 py-3 flex flex-wrap gap-4 text-xs font-semibold text-slate-600 items-center justify-between">
                 <div class="flex flex-wrap gap-3">
                     <a href="#resumen" class="hover:text-sky-600 transition">Resumen Ejecutivo</a>
+                    <a href="#motivos" class="hover:text-sky-600 transition">Reclamos por Motivo</a>
                     <a href="#clientes" class="hover:text-sky-600 transition">Por Cliente</a>
                     <a href="#tipos" class="hover:text-sky-600 transition">Por Tipo</a>
                     <a href="#evolucion" class="hover:text-sky-600 transition">Evolución Mensual</a>
@@ -175,7 +168,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
                 <div class="flex justify-between items-center">
                     <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Filtros Interactivos</h3>
-                    <button onclick="clearFilters()" class="text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 px-3 py-1.5 rounded-lg transition">Limpiar Filtros</button>
+                    <button onclick="clearFilters()" class="text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 px-3 py-1.5 rounded-lg transition cursor-pointer">Limpiar Filtros</button>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
                     <input type="text" id="globalSearch" placeholder="Buscar general..." class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-sky-500" oninput="debounceApplyFilters()">
@@ -235,6 +228,30 @@
                     <div>📅 <span class="font-bold">Fechas:</span> <span id="infoDates">-</span></div>
                     <div>🏢 <span class="font-bold">Clientes Involucrados:</span> <span id="infoClientsCount">0</span></div>
                     <div>👥 <span class="font-bold">Creadores de Avisos:</span> <span id="infoCreatorsCount">0</span></div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN NUEVA: RECLAMOS POR MOTIVO (ADAPTADA DE LA IMAGEN) -->
+            <section id="motivos" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-black text-[#0b2447]">Reclamos por Motivo</h3>
+                    <p class="text-xs text-slate-500">Distribución porcentual y desglose de casos según el código de codificación del aviso.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- Donut Chart con Total en el Centro -->
+                    <div class="lg:col-span-5 flex justify-center items-center relative py-4">
+                        <div class="w-64 h-64 relative flex items-center justify-center">
+                            <canvas id="motivoDonutChart"></canvas>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <span id="motivoTotalCases" class="text-4xl font-black text-[#0b2447] leading-none">0</span>
+                                <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase mt-1">Casos Totales</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Tarjetas de Motivos a la Derecha -->
+                    <div id="motivoCardsContainer" class="lg:col-span-7 space-y-3">
+                        <!-- Se llena dinámicamente con JS -->
+                    </div>
                 </div>
             </section>
 
@@ -399,7 +416,7 @@
                 </div>
             </section>
 
-            <!-- DETALLE COMPLETO DE RECLAMOS (TABLA PAGINADA) -->
+            <!-- DETALLE COMPLETO DE RECLAMOS -->
             <section id="detalle" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
                     <div>
@@ -421,7 +438,7 @@
                                 <th class="p-3">Aviso</th>
                                 <th class="p-3">Cliente</th>
                                 <th class="p-3">Fecha Creación</th>
-                                <th class="p-3">Tipo</th>
+                                <th class="p-3">Tipo / Motivo</th>
                                 <th class="p-3">Descripción</th>
                                 <th class="p-3">Material</th>
                                 <th class="p-3 text-center">Cant.</th>
@@ -446,7 +463,7 @@
     <!-- MODAL DE PRESENTACIÓN INTERACTIVA (HTML/CSS 16:9) -->
     <div id="presentationModal" class="fixed inset-0 bg-slate-950/90 z-50 hidden flex flex-col items-center justify-between p-4 md:p-6 backdrop-blur-md">
         
-        <!-- Barra de Controles Superior -->
+        <!-- Control Superior -->
         <div class="w-full max-w-7xl flex justify-between items-center text-white mb-2 z-10">
             <div class="flex items-center gap-3">
                 <span class="bg-sky-500 text-white font-black text-xs px-2.5 py-1 rounded tracking-widest uppercase">MAINCAL</span>
@@ -470,14 +487,14 @@
             </div>
         </div>
 
-        <!-- Contenedor del Slide Actual (Proporción 16:9 Adaptable) -->
+        <!-- Contenedor del Slide Actual -->
         <div class="flex-grow w-full flex items-center justify-center relative my-auto p-2">
             <div id="slideViewport" class="slide-card">
-                <!-- El contenido dinámico del slide actual se inyecta aquí -->
+                <!-- El contenido dinámico se inyecta aquí -->
             </div>
         </div>
 
-        <!-- Barra de Navegación Inferior -->
+        <!-- Control Inferior -->
         <div class="w-full max-w-7xl flex justify-between items-center text-white mt-2 z-10">
             <button onclick="prevSlide()" id="btnPrevSlide" class="bg-slate-800 hover:bg-sky-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition border border-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 flex items-center gap-2 cursor-pointer shadow">
                 ← Anterior
@@ -491,9 +508,44 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE PROCESAMIENTO Y LÓGICA COMPLETA -->
+    <!-- SCRIPT PRINCIPAL -->
     <script>
         const monthNames = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+        
+        // Configuración de los Motivos basada en la imagen de referencia
+        const MOTIVOS_CONFIG = {
+            'CAF': {
+                name: 'CAF — Calidad y Fabricación',
+                desc: 'Descosidos, despegues, fallas en capellada',
+                color: '#0b2447'
+            },
+            'DEP': {
+                name: 'DEP — Depósito y Preparación',
+                desc: 'Faltantes, mal armado de pedidos, talles',
+                color: '#0284c7'
+            },
+            'COM': {
+                name: 'COM — Comercialización',
+                desc: 'Muestras, préstamos a clientes, precios',
+                color: '#38bdf8'
+            },
+            'LOG': {
+                name: 'LOG — Logística',
+                desc: 'Pedido cruzado / etiquetado',
+                color: '#cbd5e1'
+            },
+            'ADM': {
+                name: 'ADM — Administración',
+                desc: 'Notas de crédito, trámites administrativos',
+                color: '#64748b'
+            },
+            'ACL': {
+                name: 'ACL — Atención al Cliente',
+                desc: 'Consultas y reclamos directos',
+                color: '#94a3b8'
+            }
+        };
+
         let rawData = [];
         let filteredData = [];
         let currentPage = 1;
@@ -503,7 +555,6 @@
         let debounceTimer = null;
         let descDebounceTimer = null;
 
-        // Variables para la Presentación
         let slidesData = [];
         let currentSlideIndex = 0;
 
@@ -573,13 +624,21 @@
                 let aviso = r[2] !== undefined && r[2] !== null ? r[2].toString().trim() : 'S/A';
                 if (aviso === '' || aviso === 'S/A') continue;
 
-                // CORREGIDO: Se separan los índices de Cliente (r[3]) y Tipo (r[5]) para evitar solapamientos
-                let cliente = r[3] !== undefined && r[3] !== null && r[3] !== '' ? r[3].toString().trim() : 'SIN CLIENTE';
-                let tipo = r[5] !== undefined && r[5] !== null && r[5] !== '' ? r[5].toString().trim() : (r[4] !== undefined ? r[4].toString().trim() : 'SIN TIPO');
-                
+                // Estructura adaptada para EXPORT de MAINCAL:
+                // r[4] = Cód.codificación (CAF, COM, DEP, LOG)
+                // r[5] = Nombre de lista / Cliente
+                // r[6] = Descripción
+                // r[7], r[8] = Material
+                // r[12] = Cantidad reclamada
+                // r[15] = Creado por
+                // r[16] = Creado el
+                // r[18] = Cierre por fecha
+                let tipo = r[4] !== undefined && r[4] !== null && r[4] !== '' ? r[4].toString().trim() : 'SIN TIPO';
+                let cliente = r[5] !== undefined && r[5] !== null && r[5] !== '' ? r[5].toString().trim() : 'SIN CLIENTE';
                 let desc = r[6] !== undefined && r[6] !== null && r[6] !== '' ? r[6].toString().trim() : 'SIN DESCRIPCIÓN';
                 let material = r[7] !== undefined && r[7] !== null ? r[7].toString().trim() : '';
                 let matText = r[8] !== undefined && r[8] !== null ? r[8].toString().trim() : '';
+                
                 let cant = parseFloat(r[12]);
                 if (isNaN(cant)) cant = 0;
 
@@ -610,7 +669,7 @@
             filteredData = [...rawData];
 
             if (rawData.length === 0) {
-                alert('No se encontraron registros válidos en las columnas indicadas.');
+                alert('No se encontraron registros válidos.');
                 document.getElementById('loadingMsg').classList.add('hidden');
                 return;
             }
@@ -636,7 +695,7 @@
                 'Aviso': r.aviso,
                 'Cliente': r.cliente,
                 'Fecha Creación': r.fechaCreado ? r.fechaCreado.toLocaleDateString('es-AR') : '',
-                'Tipo de Reclamo': r.tipo,
+                'Tipo / Motivo': r.tipo,
                 'Descripción': r.desc,
                 'Material': r.material,
                 'Cantidad': r.cantidad,
@@ -729,6 +788,7 @@
 
         function updateReport() {
             renderSummaryCards();
+            renderMotivosSection(); // Renderiza la tarjeta basada en la imagen
             renderClientsTable();
             renderTypesSection();
             renderMonthlySection();
@@ -780,6 +840,84 @@
                 document.getElementById('infoDates').innerText = 'Sin fechas válidas';
                 document.getElementById('periodSubtitle').innerText = 'Período analizado: General';
             }
+        }
+
+        /* LÓGICA DE LA SECCIÓN "RECLAMOS POR MOTIVO" (IMAGEN ADJUNTA) */
+        function renderMotivosSection() {
+            let total = filteredData.length;
+            document.getElementById('motivoTotalCases').innerText = total;
+
+            let counts = {};
+            filteredData.forEach(r => {
+                let code = r.tipo.toUpperCase().trim();
+                counts[code] = (counts[code] || 0) + 1;
+            });
+
+            // Ordenar por frecuencia
+            let sortedKeys = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+
+            // Generar Cards a la Derecha
+            let container = document.getElementById('motivoCardsContainer');
+            let cardsHtml = '';
+            let chartLabels = [];
+            let chartData = [];
+            let chartColors = [];
+
+            sortedKeys.forEach(code => {
+                let count = counts[code];
+                let pct = total > 0 ? ((count / total) * 100).toFixed(2) : "0.00";
+                let conf = MOTIVOS_CONFIG[code] || {
+                    name: `${code} — Otros Reclamos`,
+                    desc: 'Otras incidencias registrales',
+                    color: '#64748b'
+                };
+
+                chartLabels.push(conf.name);
+                chartData.push(count);
+                chartColors.push(conf.color);
+
+                cardsHtml += `
+                    <div class="motivo-card p-4 rounded-xl flex justify-between items-center border border-slate-100 shadow-sm" style="border-left-color: ${conf.color}">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">${conf.name}</h4>
+                            <p class="text-xs text-slate-400 mt-0.5">${conf.desc}</p>
+                        </div>
+                        <div class="text-right pl-4">
+                            <span class="text-lg font-black text-slate-900">${pct}%</span>
+                            <span class="text-xs font-semibold text-slate-400 ml-1">(${count})</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (sortedKeys.length === 0) {
+                cardsHtml = `<p class="text-slate-400 text-sm italic">No hay registros de motivos para el filtro actual.</p>`;
+            }
+
+            container.innerHTML = cardsHtml;
+
+            // Renderizar Donut Chart
+            let ctx = document.getElementById('motivoDonutChart').getContext('2d');
+            if (charts.motivoDonut) charts.motivoDonut.destroy();
+            
+            charts.motivoDonut = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors.length > 0 ? chartColors : ['#cbd5e1'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '72%'
+                }
+            });
         }
 
         function renderClientsTable() {
@@ -1132,7 +1270,7 @@
         }
 
         /* ==========================================================================
-           LÓGICA DEL MODO PRESENTACIÓN EN DIAPOSITIVAS (HTML 16:9)
+           MODO PRESENTACIÓN EN DIAPOSITIVAS (CON DIAPOSITIVA DE MOTIVOS)
            ========================================================================== */
 
         function openPresentation() {
@@ -1146,7 +1284,6 @@
             document.getElementById('presentationModal').classList.remove('hidden');
             renderSlide(currentSlideIndex);
 
-            // Escuchador de teclado
             window.addEventListener('keydown', handleKeyDown);
         }
 
@@ -1203,7 +1340,6 @@
             const closedPct = T > 0 ? Math.round((closed / T) * 100) : 0;
             const qty = filteredData.reduce((acc, r) => acc + r.cantidad, 0);
 
-            // Período
             let dates = filteredData.map(r => r.fechaCreado).filter(d => d !== null);
             let periodText = "General";
             if (dates.length > 0) {
@@ -1220,7 +1356,7 @@
                 total: T
             });
 
-            // 2. RESUMEN GENERAL (INDICADORES PRINCIPALES)
+            // 2. RESUMEN GENERAL
             slidesData.push({
                 type: 'summary',
                 total: T,
@@ -1230,7 +1366,19 @@
                 qty: qty
             });
 
-            // 3. RECLAMOS POR CLIENTE (PAGINADO SI HAY MUCHOS)
+            // 3. DIAPOSITIVA: RECLAMOS POR MOTIVO (ADAPTADO DE LA IMAGEN)
+            let motivoCounts = {};
+            filteredData.forEach(r => {
+                let code = r.tipo.toUpperCase().trim();
+                motivoCounts[code] = (motivoCounts[code] || 0) + 1;
+            });
+            slidesData.push({
+                type: 'motivos',
+                total: T,
+                counts: motivoCounts
+            });
+
+            // 4. RECLAMOS POR CLIENTE
             let clientMap = {};
             filteredData.forEach(r => {
                 let c = r.cliente;
@@ -1256,7 +1404,7 @@
                 });
             }
 
-            // 4. RECLAMOS POR TIPO
+            // 5. RECLAMOS POR TIPO
             let typeMap = {};
             filteredData.forEach(r => {
                 let t = r.tipo;
@@ -1276,7 +1424,7 @@
                 items: typesList
             });
 
-            // 5. EVOLUCIÓN MENSUAL (UN GRÁFICO DE BARRAS + TABLA ABAJO)
+            // 6. EVOLUCIÓN MENSUAL
             let monthlyMap = {};
             monthNames.forEach((m, idx) => {
                 monthlyMap[idx] = { name: m, total: 0, closed: 0, pending: 0, qty: 0 };
@@ -1295,7 +1443,7 @@
                 items: Object.values(monthlyMap)
             });
 
-            // 6. ESTADO Y SEGUIMIENTO DE LOS RECLAMOS (TIEMPOS)
+            // 7. TIEMPOS Y ESTADO DE GESTIÓN
             let daysDiffs = [];
             filteredData.forEach(r => {
                 if (r.estado === 'CERRADO' && r.fechaCierre && r.fechaCreado) {
@@ -1317,7 +1465,7 @@
                 max: max
             });
 
-            // 7. ANÁLISIS DE DESCRIPCIONES (SI CORRESPONDE)
+            // 8. ANÁLISIS DE DESCRIPCIONES
             let descMap = {};
             filteredData.forEach(r => {
                 descMap[r.desc] = (descMap[r.desc] || 0) + 1;
@@ -1326,7 +1474,7 @@
 
             if (descsList.length > 0) {
                 const descsPerPage = 7;
-                for (let i = 0; i < Math.min(descsList.length, 21); i += descsPerPage) { // Máximo 3 diapositivas
+                for (let i = 0; i < Math.min(descsList.length, 21); i += descsPerPage) {
                     slidesData.push({
                         type: 'descriptions',
                         items: descsList.slice(i, i + descsPerPage),
@@ -1336,7 +1484,7 @@
                 }
             }
 
-            // 8. DETALLE COMPLETO DE RECLAMOS (DISTRIBUIDO EN VARIAS DIAPOSITIVAS)
+            // 9. DETALLE PAGINADO
             const detailPerPage = 6;
             for (let i = 0; i < filteredData.length; i += detailPerPage) {
                 slidesData.push({
@@ -1352,18 +1500,15 @@
             const slide = slidesData[index];
             const viewport = document.getElementById('slideViewport');
             
-            // Destruir gráficos anteriores de slide si existen
             Object.keys(slideCharts).forEach(key => {
                 if (slideCharts[key]) slideCharts[key].destroy();
             });
             slideCharts = {};
 
-            // Actualizar Indicador
             document.getElementById('slideIndicator').innerText = `Slide ${index + 1} de ${slidesData.length}`;
             document.getElementById('btnPrevSlide').disabled = (index === 0);
             document.getElementById('btnNextSlide').disabled = (index === slidesData.length - 1);
 
-            // Generar Header Estándar de Diapositiva
             const makeHeader = (title, category = "MAINCAL S.A.") => `
                 <div class="px-8 py-4 bg-white border-b border-sky-100 flex justify-between items-center z-10 shrink-0">
                     <div>
@@ -1376,7 +1521,6 @@
                 </div>
             `;
 
-            // Generar Footer Estándar de Diapositiva
             const makeFooter = () => `
                 <div class="px-8 py-2.5 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-[11px] font-semibold text-slate-400 shrink-0 mt-auto">
                     <span>MAINCAL S.A. • Supply Chain & Servicio al Cliente</span>
@@ -1461,6 +1605,83 @@
                         ${makeFooter()}
                     `;
                     viewport.innerHTML = html;
+                    break;
+
+                case 'motivos':
+                    let sortedKeys = Object.keys(slide.counts).sort((a,b) => slide.counts[b] - slide.counts[a]);
+                    let slideMotivoCards = '';
+                    let chartLabels = [];
+                    let chartData = [];
+                    let chartColors = [];
+
+                    sortedKeys.forEach(code => {
+                        let count = slide.counts[code];
+                        let pct = slide.total > 0 ? ((count / slide.total) * 100).toFixed(2) : "0.00";
+                        let conf = MOTIVOS_CONFIG[code] || {
+                            name: `${code} — Otros Reclamos`,
+                            desc: 'Otras incidencias registrales',
+                            color: '#64748b'
+                        };
+
+                        chartLabels.push(conf.name);
+                        chartData.push(count);
+                        chartColors.push(conf.color);
+
+                        slideMotivoCards += `
+                            <div class="p-3.5 rounded-xl flex justify-between items-center bg-slate-50 border border-slate-100 shadow-sm" style="border-left: 4px solid ${conf.color}">
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-xs">${conf.name}</h4>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">${conf.desc}</p>
+                                </div>
+                                <div class="text-right pl-3">
+                                    <span class="text-base font-black text-slate-900">${pct}%</span>
+                                    <span class="text-[10px] font-semibold text-slate-400 ml-1">(${count})</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html = `
+                        ${makeHeader("Reclamos por Motivo")}
+                        <div class="p-6 flex-grow grid grid-cols-12 gap-6 items-center overflow-hidden">
+                            <div class="col-span-5 flex justify-center items-center relative py-2">
+                                <div class="w-56 h-56 relative flex items-center justify-center">
+                                    <canvas id="slideMotivoDonutChart"></canvas>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        <span class="text-3xl font-black text-[#0b2447] leading-none">${slide.total}</span>
+                                        <span class="text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-1">Casos Totales</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-span-7 space-y-2.5">
+                                ${slideMotivoCards}
+                            </div>
+                        </div>
+                        ${makeFooter()}
+                    `;
+                    viewport.innerHTML = html;
+
+                    setTimeout(() => {
+                        let ctx = document.getElementById('slideMotivoDonutChart').getContext('2d');
+                        slideCharts.motivos = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: chartLabels,
+                                datasets: [{
+                                    data: chartData,
+                                    backgroundColor: chartColors,
+                                    borderWidth: 2,
+                                    borderColor: '#ffffff'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                cutout: '72%'
+                            }
+                        });
+                    }, 50);
                     break;
 
                 case 'clients':
@@ -1580,12 +1801,9 @@
                     html = `
                         ${makeHeader("Evolución Mensual de Reclamos")}
                         <div class="p-6 flex-grow flex flex-col justify-between overflow-hidden">
-                            <!-- Un solo gráfico de barras -->
                             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 h-[220px]">
                                 <canvas id="slideMonthlyChart"></canvas>
                             </div>
-
-                            <!-- Tabla de detalle justo debajo -->
                             <div class="overflow-x-auto mt-2">
                                 <table class="slide-table shadow-sm rounded-lg text-xs">
                                     <thead>
@@ -1750,7 +1968,7 @@
                                         <th>Aviso</th>
                                         <th>Cliente</th>
                                         <th>Fecha</th>
-                                        <th>Tipo</th>
+                                        <th>Tipo / Motivo</th>
                                         <th>Descripción</th>
                                         <th style="text-align:center">Cant.</th>
                                         <th style="text-align:center">Estado</th>
