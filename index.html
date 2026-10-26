@@ -102,6 +102,12 @@
         .motivo-card:hover {
             background-color: #f1f5f9;
         }
+
+        @media print {
+            body * { visibility: hidden; }
+            #presentationModal, #presentationModal * { visibility: visible; }
+            #presentationModal { position: absolute; left: 0; top: 0; width: 100%; background: white !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -198,7 +204,6 @@
                     </div>
                 </div>
 
-                <!-- Tarjetas de Resumen General -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between">
                         <span class="text-xs font-semibold text-slate-500 uppercase">Total Reclamos</span>
@@ -222,7 +227,6 @@
                     </div>
                 </div>
 
-                <!-- Indicadores Secundarios -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-medium text-slate-600 bg-sky-50/50 border border-sky-100 rounded-xl p-4">
                     <div>📅 <span class="font-bold">Fechas:</span> <span id="infoDates">-</span></div>
                     <div>🏢 <span class="font-bold">Clientes Involucrados:</span> <span id="infoClientsCount">0</span></div>
@@ -466,11 +470,16 @@
                 <span class="text-sm font-semibold text-slate-300 hidden sm:inline">Presentación Ejecutiva de Reclamos</span>
             </div>
             
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 <span id="slideIndicator" class="text-xs font-mono font-bold bg-slate-800/80 border border-slate-700/80 px-3 py-1.5 rounded-full text-slate-300">
                     Slide 1 de 1
                 </span>
                 
+                <button onclick="downloadPresentationPDF()" title="Descargar Diapositivas en PDF" class="p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span class="hidden md:inline">Descargar Diapositivas</span>
+                </button>
+
                 <button onclick="toggleFullscreen()" title="Pantalla Completa" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition border border-slate-700 cursor-pointer flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                     <span class="hidden md:inline">Pantalla Completa</span>
@@ -1288,6 +1297,10 @@
             }
         }
 
+        function downloadPresentationPDF() {
+            window.print();
+        }
+
         function handleKeyDown(e) {
             if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
                 e.preventDefault();
@@ -1466,7 +1479,7 @@
                 }
             }
 
-            // 9. DETALLE PAGINADO (¡ÚNICAMENTE PENDIENTES / ABIERTOS EN LA DIAPOSITIVA!)
+            // 9. DETALLE PAGINADO (ÚNICAMENTE PENDIENTES / ABIERTOS)
             let pendingOnlyRecords = filteredData.filter(r => r.estado === 'ABIERTO / PENDIENTE');
             if (pendingOnlyRecords.length > 0) {
                 const detailPerPage = 6;
@@ -1485,13 +1498,18 @@
                 });
             }
 
-            // 10. CONCLUSIONES PRINCIPALES (BASADA EN LA IMAGEN ADJUNTA)
+            // 10. CONCLUSIONES PRINCIPALES
             slidesData.push({
                 type: 'conclusiones',
                 total: T,
                 closed: closed,
                 closedPct: closedPct,
                 counts: motivoCounts
+            });
+
+            // 11. DIAPOSITIVA FINAL: ¡MUCHAS GRACIAS!
+            slidesData.push({
+                type: 'gracias'
             });
         }
 
@@ -1995,7 +2013,6 @@
                     break;
 
                 case 'conclusiones':
-                    // Generar dinámicamente el texto de las conclusiones basado en la imagen adjunta
                     let keys = Object.keys(slide.counts).sort((a,b) => slide.counts[b] - slide.counts[a]);
                     let firstCode = keys[0] || 'CAF';
                     let firstCount = slide.counts[firstCode] || 0;
@@ -2041,6 +2058,26 @@
                             </div>
                         </div>
                         ${makeFooter()}
+                    `;
+                    viewport.innerHTML = html;
+                    break;
+
+                case 'gracias':
+                    html = `
+                        <div class="relative w-full h-full flex flex-col items-center justify-center p-12 bg-[#0b2447] text-white text-center overflow-hidden">
+                            <div class="slide-cover-accent"></div>
+                            <div class="slide-cover-accent-sub"></div>
+                            <div class="slide-geo-pattern" style="opacity: 0.1;"></div>
+
+                            <div class="z-10 space-y-4">
+                                <h1 class="text-5xl lg:text-6xl font-black tracking-tight">
+                                    ¡Muchas Gracias!
+                                </h1>
+                                <p class="text-xl text-sky-400 font-semibold">
+                                    Supply Chain y Servicio al Cliente — MAINCAL S.A.
+                                </p>
+                            </div>
+                        </div>
                     `;
                     viewport.innerHTML = html;
                     break;
