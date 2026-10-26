@@ -94,7 +94,6 @@
             pointer-events: none;
         }
 
-        /* Estilos específicos para las tarjetas de Motivo */
         .motivo-card {
             border-left-width: 5px;
             background-color: #f8fafc;
@@ -231,14 +230,13 @@
                 </div>
             </section>
 
-            <!-- SECCIÓN NUEVA: RECLAMOS POR MOTIVO (ADAPTADA DE LA IMAGEN) -->
+            <!-- SECCIÓN: RECLAMOS POR MOTIVO -->
             <section id="motivos" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 <div class="mb-6">
                     <h3 class="text-2xl font-black text-[#0b2447]">Reclamos por Motivo</h3>
                     <p class="text-xs text-slate-500">Distribución porcentual y desglose de casos según el código de codificación del aviso.</p>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                    <!-- Donut Chart con Total en el Centro -->
                     <div class="lg:col-span-5 flex justify-center items-center relative py-4">
                         <div class="w-64 h-64 relative flex items-center justify-center">
                             <canvas id="motivoDonutChart"></canvas>
@@ -248,9 +246,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Tarjetas de Motivos a la Derecha -->
                     <div id="motivoCardsContainer" class="lg:col-span-7 space-y-3">
-                        <!-- Se llena dinámicamente con JS -->
                     </div>
                 </div>
             </section>
@@ -490,7 +486,6 @@
         <!-- Contenedor del Slide Actual -->
         <div class="flex-grow w-full flex items-center justify-center relative my-auto p-2">
             <div id="slideViewport" class="slide-card">
-                <!-- El contenido dinámico se inyecta aquí -->
             </div>
         </div>
 
@@ -512,7 +507,6 @@
     <script>
         const monthNames = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
         
-        // Configuración de los Motivos basada en la imagen de referencia
         const MOTIVOS_CONFIG = {
             'CAF': {
                 name: 'CAF — Calidad y Fabricación',
@@ -624,15 +618,6 @@
                 let aviso = r[2] !== undefined && r[2] !== null ? r[2].toString().trim() : 'S/A';
                 if (aviso === '' || aviso === 'S/A') continue;
 
-                // Estructura adaptada para EXPORT de MAINCAL:
-                // r[4] = Cód.codificación (CAF, COM, DEP, LOG)
-                // r[5] = Nombre de lista / Cliente
-                // r[6] = Descripción
-                // r[7], r[8] = Material
-                // r[12] = Cantidad reclamada
-                // r[15] = Creado por
-                // r[16] = Creado el
-                // r[18] = Cierre por fecha
                 let tipo = r[4] !== undefined && r[4] !== null && r[4] !== '' ? r[4].toString().trim() : 'SIN TIPO';
                 let cliente = r[5] !== undefined && r[5] !== null && r[5] !== '' ? r[5].toString().trim() : 'SIN CLIENTE';
                 let desc = r[6] !== undefined && r[6] !== null && r[6] !== '' ? r[6].toString().trim() : 'SIN DESCRIPCIÓN';
@@ -652,6 +637,7 @@
                     tipo: tipo,
                     desc: desc,
                     material: material ? `${material} - ${matText}` : matText,
+                    matText: matText,
                     cantidad: cant,
                     creador: creador,
                     fechaCreado: fechaCreado,
@@ -788,7 +774,7 @@
 
         function updateReport() {
             renderSummaryCards();
-            renderMotivosSection(); // Renderiza la tarjeta basada en la imagen
+            renderMotivosSection();
             renderClientsTable();
             renderTypesSection();
             renderMonthlySection();
@@ -842,7 +828,6 @@
             }
         }
 
-        /* LÓGICA DE LA SECCIÓN "RECLAMOS POR MOTIVO" (IMAGEN ADJUNTA) */
         function renderMotivosSection() {
             let total = filteredData.length;
             document.getElementById('motivoTotalCases').innerText = total;
@@ -853,10 +838,8 @@
                 counts[code] = (counts[code] || 0) + 1;
             });
 
-            // Ordenar por frecuencia
             let sortedKeys = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
 
-            // Generar Cards a la Derecha
             let container = document.getElementById('motivoCardsContainer');
             let cardsHtml = '';
             let chartLabels = [];
@@ -896,7 +879,6 @@
 
             container.innerHTML = cardsHtml;
 
-            // Renderizar Donut Chart
             let ctx = document.getElementById('motivoDonutChart').getContext('2d');
             if (charts.motivoDonut) charts.motivoDonut.destroy();
             
@@ -1270,7 +1252,7 @@
         }
 
         /* ==========================================================================
-           MODO PRESENTACIÓN EN DIAPOSITIVAS (CON DIAPOSITIVA DE MOTIVOS)
+           MODO PRESENTACIÓN EN DIAPOSITIVAS
            ========================================================================== */
 
         function openPresentation() {
@@ -1337,7 +1319,7 @@
             const T = filteredData.length;
             const closed = filteredData.filter(r => r.estado === 'CERRADO').length;
             const pending = T - closed;
-            const closedPct = T > 0 ? Math.round((closed / T) * 100) : 0;
+            const closedPct = T > 0 ? ((closed / T) * 100).toFixed(1) : "0.0";
             const qty = filteredData.reduce((acc, r) => acc + r.cantidad, 0);
 
             let dates = filteredData.map(r => r.fechaCreado).filter(d => d !== null);
@@ -1366,7 +1348,7 @@
                 qty: qty
             });
 
-            // 3. DIAPOSITIVA: RECLAMOS POR MOTIVO (ADAPTADO DE LA IMAGEN)
+            // 3. RECLAMOS POR MOTIVO
             let motivoCounts = {};
             filteredData.forEach(r => {
                 let code = r.tipo.toUpperCase().trim();
@@ -1484,16 +1466,33 @@
                 }
             }
 
-            // 9. DETALLE PAGINADO
-            const detailPerPage = 6;
-            for (let i = 0; i < filteredData.length; i += detailPerPage) {
+            // 9. DETALLE PAGINADO (¡ÚNICAMENTE PENDIENTES / ABIERTOS EN LA DIAPOSITIVA!)
+            let pendingOnlyRecords = filteredData.filter(r => r.estado === 'ABIERTO / PENDIENTE');
+            if (pendingOnlyRecords.length > 0) {
+                const detailPerPage = 6;
+                let totalPagesPending = Math.ceil(pendingOnlyRecords.length / detailPerPage);
+                for (let i = 0; i < pendingOnlyRecords.length; i += detailPerPage) {
+                    slidesData.push({
+                        type: 'detailPending',
+                        items: pendingOnlyRecords.slice(i, i + detailPerPage),
+                        page: Math.floor(i / detailPerPage) + 1,
+                        totalPages: totalPagesPending
+                    });
+                }
+            } else {
                 slidesData.push({
-                    type: 'detail',
-                    items: filteredData.slice(i, i + detailPerPage),
-                    page: Math.floor(i / detailPerPage) + 1,
-                    totalPages: Math.ceil(filteredData.length / detailPerPage)
+                    type: 'detailPendingEmpty'
                 });
             }
+
+            // 10. CONCLUSIONES PRINCIPALES (BASADA EN LA IMAGEN ADJUNTA)
+            slidesData.push({
+                type: 'conclusiones',
+                total: T,
+                closed: closed,
+                closedPct: closedPct,
+                counts: motivoCounts
+            });
         }
 
         function renderSlide(index) {
@@ -1608,13 +1607,13 @@
                     break;
 
                 case 'motivos':
-                    let sortedKeys = Object.keys(slide.counts).sort((a,b) => slide.counts[b] - slide.counts[a]);
+                    let sortedKeysMotivos = Object.keys(slide.counts).sort((a,b) => slide.counts[b] - slide.counts[a]);
                     let slideMotivoCards = '';
                     let chartLabels = [];
                     let chartData = [];
                     let chartColors = [];
 
-                    sortedKeys.forEach(code => {
+                    sortedKeysMotivos.forEach(code => {
                         let count = slide.counts[code];
                         let pct = slide.total > 0 ? ((count / slide.total) * 100).toFixed(2) : "0.00";
                         let conf = MOTIVOS_CONFIG[code] || {
@@ -1939,28 +1938,25 @@
                     viewport.innerHTML = html;
                     break;
 
-                case 'detail':
-                    let detailRows = slide.items.map(r => {
+                case 'detailPending':
+                    let detailPendingRows = slide.items.map(r => {
                         let fCre = r.fechaCreado ? r.fechaCreado.toLocaleDateString('es-AR') : '-';
-                        let fCie = r.fechaCierre ? r.fechaCierre.toLocaleDateString('es-AR') : '-';
-                        let badgeClass = r.estado === 'CERRADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800';
-
                         return `
                             <tr>
-                                <td class="font-mono font-bold">${r.aviso}</td>
+                                <td class="font-mono font-bold text-amber-900">${r.aviso}</td>
                                 <td class="font-medium">${r.cliente}</td>
                                 <td>${fCre}</td>
                                 <td>${r.tipo}</td>
                                 <td class="truncate max-w-[200px]">${r.desc}</td>
                                 <td class="text-center font-bold">${r.cantidad}</td>
-                                <td class="text-center"><span class="${badgeClass} text-[10px] font-bold px-2 py-0.5 rounded">${r.estado}</span></td>
-                                <td>${fCie}</td>
+                                <td class="text-center"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">ABIERTO / PENDIENTE</span></td>
+                                <td class="text-slate-400 font-medium">PENDIENTE</td>
                             </tr>
                         `;
                     }).join('');
 
                     html = `
-                        ${makeHeader(`Detalle de Reclamos (${slide.page}/${slide.totalPages})`)}
+                        ${makeHeader(`Reclamos Pendientes / Abiertos (${slide.page}/${slide.totalPages})`)}
                         <div class="p-6 flex-grow flex flex-col justify-start overflow-hidden">
                             <table class="slide-table shadow-sm rounded-lg overflow-hidden text-xs">
                                 <thead>
@@ -1976,9 +1972,73 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${detailRows}
+                                    ${detailPendingRows}
                                 </tbody>
                             </table>
+                        </div>
+                        ${makeFooter()}
+                    `;
+                    viewport.innerHTML = html;
+                    break;
+
+                case 'detailPendingEmpty':
+                    html = `
+                        ${makeHeader("Reclamos Pendientes / Abiertos")}
+                        <div class="p-12 flex-grow flex flex-col items-center justify-center text-center">
+                            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mb-4 font-bold">✓</div>
+                            <h3 class="text-xl font-bold text-slate-800">¡No hay reclamos pendientes!</h3>
+                            <p class="text-sm text-slate-500 mt-2">Todos los reclamos del filtro seleccionado se encuentran cerrados y resueltos de forma satisfactoria.</p>
+                        </div>
+                        ${makeFooter()}
+                    `;
+                    viewport.innerHTML = html;
+                    break;
+
+                case 'conclusiones':
+                    // Generar dinámicamente el texto de las conclusiones basado en la imagen adjunta
+                    let keys = Object.keys(slide.counts).sort((a,b) => slide.counts[b] - slide.counts[a]);
+                    let firstCode = keys[0] || 'CAF';
+                    let firstCount = slide.counts[firstCode] || 0;
+                    let firstPct = slide.total > 0 ? ((firstCount / slide.total) * 100).toFixed(1) : "0.0";
+                    let firstConf = MOTIVOS_CONFIG[firstCode] || { name: `${firstCode} — Calidad y Fabricación`, desc: 'Descosidos y despegues' };
+
+                    let secondCode = keys[1] || 'DEP';
+                    let secondCount = slide.counts[secondCode] || 0;
+                    let secondPct = slide.total > 0 ? ((secondCount / slide.total) * 100).toFixed(1) : "0.0";
+                    let secondConf = MOTIVOS_CONFIG[secondCode] || { name: `${secondCode} — Depósito y Preparación`, desc: 'Faltantes y armado de pedidos' };
+
+                    html = `
+                        ${makeHeader("Conclusiones")}
+                        <div class="p-8 flex-grow flex flex-col justify-center overflow-hidden">
+                            <div class="bg-slate-50/70 border-2 border-slate-200/80 rounded-2xl p-8 space-y-6 shadow-sm">
+                                <h3 class="text-xl font-extrabold text-[#0b2447] tracking-tight">Conclusiones Principales</h3>
+
+                                <div class="space-y-5 text-sm text-slate-700 leading-relaxed">
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-slate-900 font-extrabold text-base mt-0.5">✓</span>
+                                        <p>
+                                            <strong class="text-slate-900">Prevalencia de Motivo Principal (${firstCode}):</strong> 
+                                            ${firstConf.desc} representan el <strong>${firstPct}% de los reclamos (${firstCount} de ${slide.total} casos)</strong>.
+                                        </p>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-slate-900 font-extrabold text-base mt-0.5">✓</span>
+                                        <p>
+                                            <strong class="text-slate-900">Oportunidad Operativa (${secondCode}):</strong> 
+                                            Los reclamos por ${secondConf.desc.toLowerCase()} representan el <strong>${secondPct}% (${secondCount} casos)</strong>, señalando la necesidad de optimizar el control previo al despacho.
+                                        </p>
+                                    </div>
+
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-slate-900 font-extrabold text-base mt-0.5">✓</span>
+                                        <p>
+                                            <strong class="text-slate-900">Efectividad en la Gestión:</strong> 
+                                            El <strong>${slide.closedPct}% de los reclamos (${slide.closed} de ${slide.total})</strong> ya se encuentran cerrados y resueltos de manera satisfactoria.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         ${makeFooter()}
                     `;
